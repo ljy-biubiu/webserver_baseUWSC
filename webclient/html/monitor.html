@@ -65,14 +65,20 @@
         /////////////////////////////////////////////////////////////////////////////////////////////
 
 
+	var cnt_event = 0;
+	var flag_non = 0 ;
 
         var timer = setInterval(function () {
 
-            if (flag_test == 1) {
+	
+            if (flag_test == 1   ) {
                 flag_test = 0;
-                input_pointTcanvas_mid_scan(jsonObj);
+		console.log("===================");
+		//console.log(receive_lidar_data);
+                input_pointTcanvas_mid_scan(receive_lidar_data);
             }
-
+            
+            
         }, 50)
 
 
@@ -83,7 +89,81 @@
         let windowHalfY = window.innerHeight / 2;
 
 
+////////////////////////////////////////////////////
 
+////////////////////////////////////////////////////////
+
+/*
+
+释放webGL占用内存
+
+write by wuweiwei
+
+*/
+
+var releaseRender = function(renderer, scene)
+{
+
+    scene.traverse((child) => {
+      if (child.material) {
+        child.material.dispose();
+      }
+      if (child.geometry) {
+        child.geometry.dispose();
+      }
+      child = null;
+    });
+  
+
+  try
+
+  {
+
+    clearScene(scene);
+  }
+
+  catch (e)
+
+  {
+  }
+
+  try
+
+  {
+
+    renderer.renderLists.dispose();
+
+    renderer.dispose();
+
+    //renderer.forceContextLoss();
+
+    renderer.domElement = null;
+
+    renderer.content = null;
+
+    renderer = null;
+  }
+
+  catch (e)
+
+  {
+  }
+
+  if (!!window.requestAnimationId)
+
+  {
+
+    cancelAnimationFrame(window.requestAnimationId);
+  }
+
+  THREE.Cache.clear();
+}
+
+
+/////////////////////////////////////////////////////
+
+var group = new THREE.Group();
+var flag_init = 0 ;
 
         //放入点rs_mid_scan
         function input_pointTcanvas_mid_scan(point_array) {
@@ -92,13 +172,26 @@
                 if (point_array[i].x == null) {
                     continue;
                 }
-                position_mid_scan.push(point_array[i].x.toFixed(3));
-                position_mid_scan.push(point_array[i].y.toFixed(3));
-                position_mid_scan.push(point_array[i].z.toFixed(3));
+                position_mid_scan.push(point_array[i].x);
+                position_mid_scan.push(point_array[i].y);
+                position_mid_scan.push(point_array[i].z);
             }
             //console.log("the mark is " + point_array[0].z.toFixed(3));
-
+	    releaseRender(renderer, scene);
             geometry_mid_scan.setAttribute('position', new Float32BufferAttribute(position_mid_scan, 3));
+            
+            
+            //////////////////////////////////////////////////////////////////////
+            
+            if(flag_init == 1)
+            {
+            	return;
+            }
+            flag_init = 1;
+            
+            /////////////////////////////////////////////////////////////////////////
+            
+            
             //geometry_rs.setAttribute( 'normal', new Float32BufferAttribute( normal_rs, 3 ) );
             geometry_mid_scan.computeBoundingSphere();
 
@@ -107,8 +200,14 @@
 
             // var mesh_rs = new THREE.Mesh( geometry_rs, material_rs );
             //console.log(point_array);
+            var mesh_mid_scan;
             mesh_mid_scan = new Points(geometry_mid_scan, material_mid_scan);
-            scene.add(mesh_mid_scan);
+
+
+	    group.add(mesh_mid_scan);
+	    scene.add(group);
+
+
         }
 
 
@@ -129,7 +228,6 @@
         cube.position.x = 0;
         cube.position.y = 0;
         cube.position.z = 10;
-        //scene.add(cube);
 
         renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setPixelRatio(window.devicePixelRatio);
