@@ -21,10 +21,8 @@
 #include <vector>
 #include "websocket.h"
 
-
-
 #include "pcl_conversions/pcl_conversions.h"
- 
+
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/io/ply_io.h>
@@ -51,6 +49,8 @@ public:
   void read();
 
 private:
+  rclcpp::TimerBase::SharedPtr timer_;
+  void timerCallback();
 
   void lidarDatasCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
   // 订阅

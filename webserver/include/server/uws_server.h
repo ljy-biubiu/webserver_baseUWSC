@@ -16,34 +16,44 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <queue>
 #include <set>
 
 #include "uWS.h"
 
+#define REC_BUF_SIZE 1024
 
-namespace websocket {
+namespace websocket
+{
 
-class UwsServer {
- public:
-  explicit UwsServer(const std::string &config);
-  UwsServer() :  worker_(nullptr) {}
-  ~UwsServer() = default;
+  class UwsServer
+  {
+  public:
+    explicit UwsServer(const std::string &config);
+    UwsServer() : worker_(nullptr) {}
+    ~UwsServer() = default;
 
- public:
-  int Init();
-  int Send(const std::string &protocol);
-  int DeInit();
+  public:
+    int Init();
+    int Send(const std::string &protocol);
+    int DeInit();
+    std::queue<std::string>& get_rec_queue()
+    {
+      return my_rec_queue;
+    }
 
- private:
-  void StartServer();
-  std::mutex mutex_;
-  //uWS::WebSocket<uWS::SERVER> *connetion_;
-  std::set<uWS::WebSocket<uWS::SERVER> *> _connections;
+  private:
+    void StartServer();
+    std::mutex mutex_;
+    // uWS::WebSocket<uWS::SERVER> *connetion_;
+    std::set<uWS::WebSocket<uWS::SERVER> *> _connections;
 
-  std::shared_ptr<std::thread> worker_;
- private:
-  std::string config_file_;
-};
-}  // namespace websocket
+    std::shared_ptr<std::thread> worker_;
 
-#endif  // INCLUDE_WEBSOCKETPLUGIN_SERVER_UWS_SERVER_H_
+  private:
+    std::string config_file_;
+    std::queue<std::string> my_rec_queue;
+  };
+} // namespace websocket
+
+#endif // INCLUDE_WEBSOCKETPLUGIN_SERVER_UWS_SERVER_H_

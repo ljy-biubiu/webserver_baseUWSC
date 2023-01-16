@@ -24,8 +24,8 @@ $(function () {
 
        if(jsonObj.lidar)
        {
-          console.log("lidar")
-          receive_lidar_data = jsonObj.lidar;
+	  flag_test = 1;
+          receive_lidar_data = window.JSON.parse(jsonObj.lidar);
        }
        else if(jsonObj.image)
        {

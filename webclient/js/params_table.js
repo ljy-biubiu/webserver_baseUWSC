@@ -15,6 +15,10 @@
 // 	return result;
 // }
 
+var table_send_flag = false;
+var jsonText_final;
+
+
 function serializeForm(form) {
 	var obj = {};
 	$.each(form.serializeArray(), function (index) {
@@ -123,11 +127,12 @@ window.onload = function () {
 		json_obj.pixel_y_max = document.getElementById("pixel_y_max").value;
 		json_obj.move_origin = document.getElementById("move_origin").value;
 
-		let jsonText_final = JSON.stringify(json_obj);
+		jsonText_final = JSON.stringify(json_obj);
 		//console.log(lidar_ip);
-		console.log(lidar_ip.value);
-		console.log("qweqwewqdqw");
+		//console.log(lidar_ip.value);
+		//console.log("qweqwewqdqw");
 		console.log(jsonText_final);
+		table_send_flag = true;
 	})
 
 	//var comfirm_save = document.getElementById("comfirm_save");

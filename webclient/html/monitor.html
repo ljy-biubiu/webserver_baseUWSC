@@ -4,7 +4,8 @@
 <head>
     <title>网页点云显示测试</title>
     <meta charset="utf-8">
-    <!-- <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"> -->
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1"> -->
+    <meta name="viewport" content="width=device-width, initial-scale=2">
     <meta HTTP-EQUIV="Pragma" CONTENT="no-cache">
     <meta HTTP-EQUIV="Cache-Control" CONTENT="no-cache">
     <meta HTTP-EQUIV="Expires" CONTENT="0">
@@ -68,14 +69,36 @@
 	var cnt_event = 0;
 	var flag_non = 0 ;
 
+	var cnt_test2= 0;
+	var cnt_yy = 0;
+
         var timer = setInterval(function () {
 
+	    cnt_yy = cnt_yy +50;
 	
             if (flag_test == 1   ) {
                 flag_test = 0;
-		console.log("===================");
+		//console.log("===================");
 		//console.log(receive_lidar_data);
                 input_pointTcanvas_mid_scan(receive_lidar_data);
+                //console.log(receive_lidar_data);
+                cnt_test2++;
+            }
+            
+            if( cnt_yy == 1000 )
+            {
+            	//console.log(cnt_test2);
+            	cnt_yy = 0;
+            	cnt_test2 = 0;
+            	
+            	//document.body.style.zoom = 0.5;
+            }
+            
+            if( table_send_flag ==true )
+            {
+            	ws.send(jsonText_final);
+            	//console.log("pppppppppppppppppppppppp");
+            	table_send_flag = false;
             }
             
             
@@ -90,6 +113,8 @@
 
 
 ////////////////////////////////////////////////////
+
+
 
 ////////////////////////////////////////////////////////
 
@@ -168,13 +193,13 @@ var flag_init = 0 ;
         //放入点rs_mid_scan
         function input_pointTcanvas_mid_scan(point_array) {
             position_mid_scan.length = 0;
-            for (var i = 0; i < point_array.length; i++) {
-                if (point_array[i].x == null) {
+            for (var i = 0; i < point_array.length; i = i+3) {
+                if (point_array[i] == null) {
                     continue;
                 }
-                position_mid_scan.push(point_array[i].x);
-                position_mid_scan.push(point_array[i].y);
-                position_mid_scan.push(point_array[i].z);
+                position_mid_scan.push(point_array[i]);
+                position_mid_scan.push(point_array[i+1]);
+                position_mid_scan.push(point_array[i+2]);
             }
             //console.log("the mark is " + point_array[0].z.toFixed(3));
 	    releaseRender(renderer, scene);
@@ -276,6 +301,7 @@ var flag_init = 0 ;
         camera.up.set(0, 0, 1);
         camera.lookAt(0, 0, 0);
         lock1 = 0;
+
 
     </script>
 

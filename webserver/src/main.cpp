@@ -25,17 +25,3 @@ int main(int argc, char *argv[])
   rclcpp::spin(std::make_shared<RosTalk>(web_talk));
   rclcpp::shutdown();
 }
-
-
-
-
-// //不能删，没有这个会报缺少文件
-// void test(uWS::Hub h, std::atomic<int> expectedRequests)
-// {
-//   auto controlData = [&h, &expectedRequests](uWS::HttpResponse *res, char *data, size_t length, size_t remainingBytes)
-//   {
-//     res->end();
-//   };
-//   h.onHttpData([&controlData](uWS::HttpResponse *res, char *data, size_t length, size_t remainingBytes)
-//                { controlData(res, data, length, remainingBytes); });
-// }

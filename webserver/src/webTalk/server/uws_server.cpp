@@ -63,7 +63,19 @@ namespace websocket
 
     hub.onMessage([this](uWS::WebSocket<uWS::SERVER> *ws, char *message,
                          size_t length, uWS::OpCode opCode)
-                  { RCLCPP_DEBUG(rclcpp::get_logger("websocket"), "UwsServer onMessage: %s", message); });
+                  { 
+                    char rec_dat_buf[REC_BUF_SIZE];
+                    memset(rec_dat_buf,0x00,REC_BUF_SIZE);
+                    memcpy(rec_dat_buf,message,length);
+                    std::string rec_dat_(rec_dat_buf);
+                    //std::cout << "received message: " << qwe << std::endl;
+                    
+                    RCLCPP_DEBUG(rclcpp::get_logger("websocket"), "UwsServer onMessage: %s", message);
+                    if(my_rec_queue.size() > 5)
+                    {
+                      std::cout << "received message queue size more than five "<< std::endl;
+                    }
+                    my_rec_queue.push(rec_dat_); });
 
     hub.onDisconnection([this](uWS::WebSocket<uWS::SERVER> *ws, int code,
                                char *message, size_t length)
@@ -89,6 +101,9 @@ namespace websocket
       for (auto c : _connections)
       {
         c->send(protocol.c_str(), protocol.size(), uWS::OpCode::TEXT);
+        // std::cout << "11111111111111111" << std::endl;
+        // c->send(protocol.c_str(), protocol.size(), uWS::OpCode::BINARY);
+        //   std::cout << "222222222222" << std::endl;
       }
 
       // connetion_->send(protocol.c_str(), protocol.size(), uWS::OpCode::BINARY);

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "websocket/websocket.h"
+#include "rapidjson/document.h"
 
 namespace websocket
 {
@@ -116,8 +117,35 @@ namespace websocket
         std::cout << "web socket has cache image num > 20, size " << my_queue.size() << std::endl;
       }
 
-      usleep(5 * 1000);
+      if (uws_server_->get_rec_queue().size() != 0)
+      {
+        //std::cout << uws_server_->get_rec_queue().front() << std::endl;
+        if(parse_json_data(uws_server_->get_rec_queue().front()));
+        uws_server_->get_rec_queue().pop();
+      }
+
+      usleep(1 * 1000);
     }
   }
 
+  int Websocket::parse_json_data(const std::string &json_data)
+  {
+    rapidjson::Document dom;
+    if (!dom.Parse(json_data.c_str()).HasParseError())
+    {
+      if (dom.HasMember("lidar_ip") && dom["lidar_ip"].IsString())
+      {
+        std::cout << "lidar_ip : " << dom["lidar_ip"].GetString() << std::endl;
+        return 1;
+      }
+    }
+    return 0;
+  }
+
 } // namespace websocket
+
+// rapidjson::Document dom;
+// 	if (!dom.Parse(json_content.c_str()).HasParseError()) {
+// 		if (dom.HasMember("name") && dom["name"].IsString()) {
+// 			fprintf(stdout, "name: %s\n", dom["name"].GetString());
+// 		}

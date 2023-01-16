@@ -1,8 +1,16 @@
 #include <iostream>
 #include "rostalk.h"
+#include "my_protobuf_type.pb.h"
+#include "google/protobuf/text_format.h"
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
+#include <sys/time.h>
+#include "rapidjson/document.h"
+// #include "rapidjson/writer.h"
+#include "rapidjson/prettywriter.h"
+#include "rapidjson/stringbuffer.h"
+using namespace std::chrono_literals;
 
 //--------------------------------------
 using std::placeholders::_1;
@@ -114,15 +122,29 @@ void RosTalk::init()
       rclcpp::QoS{10},
       [this](const sensor_msgs::msg::PointCloud2::SharedPtr msg)
       { lidarDatasCallback(msg); });
+
+  timer_ =
+      this->create_wall_timer(1ms, std::bind(&RosTalk::timerCallback, this));
+}
+
+unsigned long long timeUs()
+{
+  timespec ts{};
+  timespec_get(&ts, TIME_UTC);
+  return (unsigned long long)(ts.tv_sec * 1000.0 * 1000.0 + ts.tv_nsec / (1000.0));
+}
+
+int timersss{0};
+
+void RosTalk::timerCallback()
+{
+  // std::cout << timersss << std::endl;
+  // timersss = 0;
+  
 }
 
 void RosTalk::lidarDatasCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
 {
-
-  // 子节点
-  Json::Value root;
-  Json::Value friends;
-  Json::FastWriter writer;
 
   auto caculate2Bit = [](const double &val)
   {
@@ -135,29 +157,173 @@ void RosTalk::lidarDatasCallback(const sensor_msgs::msg::PointCloud2::SharedPtr 
     // return std::to_string(int(data * 100) * 0.01);
   };
 
-  // sensor_msgs::PointCloud out_pointcloud;
-  // sensor_msgs::convertPointCloud2ToPointCloud(msg, out_pointcloud);
-
   auto cloud =
       boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   pcl::fromROSMsg(*msg, *cloud);
 
+  //  std::cout << "cloud->points[i].x" << cloud->points.size() << std::endl;
+
+  std::string lidar_data;
+
+  double time2 = timeUs();
+  rapidjson::StringBuffer buf;
+  // rapidjson::Writer<rapidjson::StringBuffer> writer(buf);
+  // rapidjson::PrettyWriter<rapidjson::StringBuffer> writer_rap(buf); // it can word wrap
+  rapidjson::Writer<rapidjson::StringBuffer> writer_rap(buf); // it can word wrap
+  writer_rap.StartArray();
   for (int i = 0; i < cloud->points.size(); i++)
   {
-    // cout << out_pointcloud.points[i].x << ", " << out_pointcloud.points[i].y << ", " << out_pointcloud.points[i].z << endl;
-    friends["x"] = Json::Value(caculate2Bit(cloud->points[i].x));
-    friends["y"] = Json::Value(caculate2Bit(cloud->points[i].y));
-    friends["z"] = Json::Value(caculate2Bit(cloud->points[i].z));
-
-    // friends["z"] = Json::Value(lidardata.mark);
-    root.append(friends);
+    //区域过滤
+    if (abs(cloud->points[i].x) < 40 && abs(cloud->points[i].y) < 40)
+    {
+      //数据精度调整
+      writer_rap.String(caculate2Bit(cloud->points[i].x).c_str());
+      writer_rap.String(caculate2Bit(cloud->points[i].y).c_str());
+      writer_rap.String(caculate2Bit(cloud->points[i].z).c_str());
+    }
   }
+  writer_rap.EndArray();
+  lidar_data = buf.GetString();
+  //std::cout << "time_rap:" << timeUs() - time2 << " strr: " << lidar_data.length() << std::endl;
+  /////////////////////////////////////////////////////////////////
 
-  std::string lidar_data = writer.write(root);
+
   std::vector<std::string> data;
   data.push_back("lidar");
   data.push_back(lidar_data);
   this->websocket->pushData(data);
-
-  std::cout << "1111111111111111111111111111" << std::endl;
+  timersss++;
 }
+
+// void RosTalk::lidarDatasCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
+// {
+
+//   auto caculate2Bit = [](const double &val)
+//   {
+//     char *chCode;
+//     chCode = new char[20];
+//     sprintf(chCode, "%.2lf", int(val * 100) * 0.01);
+//     std::string str(chCode);
+//     delete[] chCode;
+//     return str;
+//     // return std::to_string(int(data * 100) * 0.01);
+//   };
+
+//   auto cloud =
+//       boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+//   pcl::fromROSMsg(*msg, *cloud);
+
+//   //  std::cout << "cloud->points[i].x" << cloud->points.size() << std::endl;
+
+//   // double time = timeUs();
+//   // usleep(1000 * 1);
+//   // std::cout << "time_real" << timeUs() - time << std::endl;
+
+//   std::string lidar_data;
+
+//   double time1 = timeUs();
+
+//   // 子节点
+//   Json::Value root;
+//   Json::Value friends;
+//   Json::FastWriter writer;
+
+//   Json::Value valueArray;
+//   for (int i = 0; i < cloud->points.size(); i++)
+//   {
+//     // friends["x"] = Json::Value(caculate2Bit(cloud->points[i].x));
+//     // friends["y"] = Json::Value(caculate2Bit(cloud->points[i].y));
+//     // friends["z"] = Json::Value(caculate2Bit(cloud->points[i].z));
+//     // root.append(friends);
+//     valueArray.append(caculate2Bit(cloud->points[i].x));
+//     valueArray.append(caculate2Bit(cloud->points[i].y));
+//     valueArray.append(caculate2Bit(cloud->points[i].z));
+//   }
+//   // root["array"] = valueArray;
+//   lidar_data = writer.write(valueArray);
+
+//   std::cout << "time_cpp:" << timeUs() - time1 << " strr: " << lidar_data.length() << std::endl;
+//   std::cout << lidar_data << std::endl;
+//   std::cout << "bbbbbbbbbbbbbbbb" << std::endl;
+//   std::cout << "bbbbbbbbbbbbbbbb" << std::endl;
+//   std::cout << "bbbbbbbbbbbbbbbb" << std::endl;
+//   std::cout << "bbbbbbbbbbbbbbbb" << std::endl;
+//   ////////////////////////////////////////////////////////////////
+
+//   double time2 = timeUs();
+//   rapidjson::StringBuffer buf;
+//   // rapidjson::Writer<rapidjson::StringBuffer> writer(buf);
+//   // rapidjson::PrettyWriter<rapidjson::StringBuffer> writer_rap(buf); // it can word wrap
+//   rapidjson::Writer<rapidjson::StringBuffer> writer_rap(buf); // it can word wrap
+//   writer_rap.StartArray();
+//   for (int i = 0; i < cloud->points.size(); i++)
+//   {
+//     writer_rap.String(caculate2Bit(cloud->points[i].x).c_str());
+//     writer_rap.String(caculate2Bit(cloud->points[i].y).c_str());
+//     writer_rap.String(caculate2Bit(cloud->points[i].z).c_str());
+//   }
+//   writer_rap.EndArray();
+//   lidar_data = buf.GetString();
+//   // std::cout << lidar_data << std::endl;
+//   // std::cout << "aaaaaaaaaaaaa" << std::endl;
+//   // std::cout << "aaaaaaaaaaaaa" << std::endl;
+//   // std::cout << "aaaaaaaaaaaaa" << std::endl;
+//   std::cout << "time_rap:" << timeUs() - time2 << " strr: " << lidar_data.length() << std::endl;
+//   /////////////////////////////////////////////////////////////////
+
+//   double time3 = timeUs();
+
+// //  pt::Points2 points_pt;
+//   pt::Point2 point_pt;
+// //  point_pt = points_pt.add_data();
+//   for (int i = 0; i < cloud->points.size(); i++)
+//   {
+//     point_pt.add_x(caculate2Bit(cloud->points[i].x));
+//     point_pt.add_x(caculate2Bit(cloud->points[i].y));
+//     point_pt.add_x(caculate2Bit(cloud->points[i].z));
+//     // point_pt = points_pt.add_data();
+//     // point_pt->set_x(cloud->points[i].y);
+//     // point_pt = points_pt.add_data();
+//     // point_pt->set_x(cloud->points[i].z);
+//   }
+//   point_pt.SerializeToString(&lidar_data);
+
+//   pt::Point2 point_pt2;
+
+//   point_pt2.ParseFromString(lidar_data);
+
+//   // std::string new_str;
+//   // google::protobuf::TextFormat::PrintToString(point_pt2, &new_str);
+//   // std::cout<< new_str <<std::endl;
+
+//   std::cout << "time_pro:" << timeUs() - time3 << " lidar_data: " << lidar_data.length() << std::endl;
+
+//   std::cout<<"writer.write(root) :"<<writer.write(root).length()<<std::endl;
+//   std::string lidar_data = strr;
+
+//   std::vector<std::string> data;
+//   data.push_back("lidar");
+//   data.push_back(lidar_data);
+//   this->websocket->pushData(data);
+
+//   std::cout << "1111111111111111111111111111" << std::endl;
+
+//   for (int i = 0; i < cloud->points.size(); i++)
+//   {
+//     // cout << out_pointcloud.points[i].x << ", " << out_pointcloud.points[i].y << ", " << out_pointcloud.points[i].z << endl;
+//     friends["x"] = Json::Value(caculate2Bit(cloud->points[i].x));
+//     friends["y"] = Json::Value(caculate2Bit(cloud->points[i].y));
+//     friends["z"] = Json::Value(caculate2Bit(cloud->points[i].z));
+
+//     // friends["z"] = Json::Value(lidardata.mark);
+//     root.append(friends);
+//   }
+
+//   std::string lidar_data = writer.write(root);
+//   std::string lidar_data = buf.GetString();
+//   std::vector<std::string> data;
+//   data.push_back("lidar");
+//   data.push_back(lidar_data);
+//   this->websocket->pushData(data);
+//   timersss++;
+// }

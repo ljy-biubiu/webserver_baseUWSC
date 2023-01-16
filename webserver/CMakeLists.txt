@@ -31,6 +31,11 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lprotobuf  -std=c++11  -lpthread ")
+#设置编译带的参数
+find_package(Protobuf REQUIRED)
+
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
@@ -40,6 +45,7 @@ find_package(rclcpp REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(PCL 1.9 REQUIRED)
+find_package(RapidJSON)
 
 
 MESSAGE(${PROJECT_SOURCE_DIR})
@@ -47,16 +53,18 @@ MESSAGE(${PROJECT_SOURCE_DIR})
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/third_party/uWSC/include
   ${CMAKE_CURRENT_SOURCE_DIR}/third_party/openssl
+  ${CMAKE_CURRENT_SOURCE_DIR}/third_party/protobuf
   include/
   include/server
   include/utils
   include/threads
   include/websocket
   ${PCL_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIRS})
+  ${OpenCV_INCLUDE_DIRS}
+  ${Protobuf_INCLUDE_DIRS})
   
 file(GLOB_RECURSE ALL_SRCS "src/webTalk/[a-zA-Z]*.cpp" "src/webTalk/[a-zA-Z]*.cc"
-                           "src/[a-zA-Z]*.cpp" "src/webTalk/[a-zA-Z]*.cpp"  )
+                           "src/[a-zA-Z]*.cpp" "src/webTalk/[a-zA-Z]*.cpp" "third_party/protobuf/my_protobuf_type.pb.cc" )
 
 add_executable(${PROJECT_NAME} ${ALL_SRCS})
 
@@ -73,6 +81,7 @@ link_directories(
 add_definitions(${PCL_DEFINITIONS})
 
 target_link_libraries(mywebsocket  
+  /usr/local/lib/libprotobuf.so.28
   ${CMAKE_CURRENT_SOURCE_DIR}/third_party/openssl/lib/libssl.so crypto z 
   ${CMAKE_CURRENT_SOURCE_DIR}/third_party/uWSC/libuWS.so 
   ${OpenCV_LIBS}
@@ -97,6 +106,10 @@ install(FILES
 install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/third_party/openssl/lib/libcrypto.so
   DESTINATION lib/)  
+
+install(FILES
+  /usr/local/lib/libprotobuf.so.28
+  DESTINATION lib/)
 
 
 if(BUILD_TESTING)

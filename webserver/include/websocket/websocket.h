@@ -25,9 +25,51 @@
 #include "server/uws_server.h"
 #include "threads/threadpool.h"
 
+struct TableParams
+{
+  std::string lidar_ip;
+  int lidar_data_port{0};
+  int lidar_device_port{0};
+  std::string result_ip;
+  int result_port{0};
+
+  std::string video_url;
+  std::string debug;
+
+  bool log_flag{0};
+  bool filter_flag{0};
+  double filter_x_min{0};
+  double filter_x_max{0};
+  double filter_y_min{0};
+  double filter_y_max{0};
+  double filter_z_min{0};
+  double filter_z_max{0};
+
+  bool transform_flag{0};
+  double pitch{0};
+  double roll{0};
+  double yaw{0};
+  double x_offset{0};
+  double y_offset{0};
+  double z_offset{0};
+  std::string calculate_calibration_param{0};
+  bool save_pcd{0};
+
+  std::string pcd_path;
+  std::string points_txt_path;
+
+  double mosaic_image_height{0};
+  double mosaic_image_width{0};
+  double pixel_grid_size{0};
+  double pixel_x_min{0};
+  double pixel_x_max{0};
+  double pixel_y_min{0};
+  double pixel_y_max{0};
+  double move_origin{0};
+};
+
 namespace websocket
 {
-
   enum CONTENT
   {
     CONTENT_NAME = 0,
@@ -41,6 +83,7 @@ namespace websocket
     ~Websocket();
 
     void pushData(const std::vector<std::string> &msg);
+    int parse_json_data(const std::string &json_data);
 
   private:
     std::queue<std::vector<std::string>> my_queue;
